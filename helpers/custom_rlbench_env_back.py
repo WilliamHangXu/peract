@@ -212,16 +212,11 @@ class CustomMultiTaskRLBenchEnv(MultiTaskRLBenchEnv):
                  swap_task_every: int = 1,
                  time_in_state: bool = False,
                  include_lang_goal_in_obs: bool = False,
-                 record_every_n: int = 20,
-                 base_cfg_name=None,
-                 task_class_variation_idx=None):
-                 
+                 record_every_n: int = 20):
         super(CustomMultiTaskRLBenchEnv, self).__init__(
             task_classes, observation_config, action_mode, dataset_root,
             channels_last, headless=headless, swap_task_every=swap_task_every,
-            include_lang_goal_in_obs=include_lang_goal_in_obs,
-            base_cfg_name=base_cfg_name,
-            task_class_variation_idx=task_class_variation_idx)
+            include_lang_goal_in_obs=include_lang_goal_in_obs)
         self._reward_scale = reward_scale
         self._episode_index = 0
         self._record_current_episode = False
