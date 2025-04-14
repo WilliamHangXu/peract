@@ -197,7 +197,6 @@ class CustomRLBenchEnv(RLBenchEnv):
 
         return self._previous_obs_dict
 
-
 class CustomMultiTaskRLBenchEnv(MultiTaskRLBenchEnv):
 
     def __init__(self,
@@ -301,16 +300,36 @@ class CustomMultiTaskRLBenchEnv(MultiTaskRLBenchEnv):
     def register_callback(self, func):
         self._task._scene.register_step_callback(func)
 
+    # def _my_callback(self):
+    #     if self._record_current_episode:
+    #         self._record_cam.handle_explicitly()
+    #         cap = (self._record_cam.capture_rgb() * 255).astype(np.uint8)
+    #         self._recorded_images.append(cap)
+
+    # def _append_final_frame(self, success: bool):
+    #     self._record_cam.handle_explicitly()
+    #     img = (self._record_cam.capture_rgb() * 255).astype(np.uint8)
+    #     self._recorded_images.append(img)
+    #     final_frames = np.zeros((10, ) + img.shape[:2] + (3,), dtype=np.uint8)
+    #     # Green/red for success/failure
+    #     final_frames[:, :, :, 1 if success else 0] = 255
+    #     self._recorded_images.extend(list(final_frames))
+
     def _my_callback(self):
         if self._record_current_episode:
-            self._record_cam.handle_explicitly()
-            cap = (self._record_cam.capture_rgb() * 255).astype(np.uint8)
-            self._recorded_images.append(cap)
+            # self._record_cam.handle_explicitly()
+            # cap = (self._record_cam.capture_rgb() * 255).astype(np.uint8)
+            obs = self._task._scene.get_observation()
+            front_rgb = obs.front_rgb
+            cap = (front_rgb * 255).astype(np.uint8)
+            self._recorded_images.append(obs.front_rgb)
 
     def _append_final_frame(self, success: bool):
-        self._record_cam.handle_explicitly()
-        img = (self._record_cam.capture_rgb() * 255).astype(np.uint8)
-        self._recorded_images.append(img)
+        # self._record_cam.handle_explicitly()
+        # img = (self._record_cam.capture_rgb() * 255).astype(np.uint8)
+        obs = self._task._scene.get_observation()
+        img = (obs.front_rgb * 255).astype(np.uint8)
+        self._recorded_images.append(obs.front_rgb)
         final_frames = np.zeros((10, ) + img.shape[:2] + (3,), dtype=np.uint8)
         # Green/red for success/failure
         final_frames[:, :, :, 1 if success else 0] = 255
@@ -363,6 +382,13 @@ class CustomMultiTaskRLBenchEnv(MultiTaskRLBenchEnv):
                 self._last_exception = None
 
             summaries.append(TextSummary('errors', f"Success: {success} | " + error_str))
+        else:
+            # self._append_final_frame(success)
+            vid = np.array(self._recorded_images).transpose((0, 3, 1, 2))
+            task_name = change_case(self._task._task.__class__.__name__)
+            summaries.append(VideoSummary(
+                'episode_rollout_' + ('success' if success else 'fail') + f'/{task_name}',
+                vid, fps=30))
         return Transition(obs, reward, terminal, summaries=summaries)
 
     def reset_to_demo(self, i, variation_number=-1):
